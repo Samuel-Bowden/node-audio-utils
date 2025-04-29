@@ -19,7 +19,7 @@ class InputUtils {
         this.audioData = new ModifiedDataView_1.ModifiedDataView(this.emptyData.buffer);
     }
     setAudioData(audioData) {
-        this.audioData = new ModifiedDataView_1.ModifiedDataView(audioData.buffer);
+        this.audioData = new ModifiedDataView_1.ModifiedDataView(audioData.buffer, audioData.byteOffset, audioData.length);
         this.changedParams = { ...this.audioInputParams };
         return this;
     }
@@ -66,7 +66,7 @@ class InputUtils {
         return this;
     }
     getAudioData() {
-        return new Uint8Array(this.audioData.buffer);
+        return new Uint8Array(this.audioData.buffer, this.audioData.byteOffset, this.audioData.byteLength);
     }
 }
 exports.InputUtils = InputUtils;

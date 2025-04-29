@@ -17,6 +17,14 @@ export type MixerParams = {
     silentDuration?: number;
     delayTime?: DelayTimeType;
 } & BasedParams;
+export type InterleaverParams = {
+    autoClose?: boolean;
+    highWaterMark?: number;
+    generateSilence?: boolean;
+    silentDuration?: number;
+    delayTime?: DelayTimeType;
+    channels: 1;
+} & BasedParams;
 export type InputParams = {
     forceClose?: boolean;
     correctByteSize?: boolean;

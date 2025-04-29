@@ -33,7 +33,7 @@ export class InputUtils implements AudioUtils {
 	}
 
 	public setAudioData(audioData: Uint8Array): this {
-		this.audioData = new ModifiedDataView(audioData.buffer);
+		this.audioData = new ModifiedDataView(audioData.buffer, audioData.byteOffset, audioData.length);
 		this.changedParams = {...this.audioInputParams};
 
 		return this;
@@ -98,6 +98,6 @@ export class InputUtils implements AudioUtils {
 	}
 
 	public getAudioData(): Uint8Array {
-		return new Uint8Array(this.audioData.buffer);
+		return new Uint8Array(this.audioData.buffer, this.audioData.byteOffset, this.audioData.byteLength);
 	}
 }
