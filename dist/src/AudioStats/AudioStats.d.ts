@@ -2,17 +2,17 @@ import { Writable } from 'stream';
 import { type InputParams } from '../Types/ParamTypes';
 export declare class AudioStats extends Writable {
     channels: ChannelStats[];
-    currentChannel: number;
+    private currentChannel;
     private readonly inputParams;
     constructor(inputParams: InputParams);
     reset(): void;
     _write(chunk: Uint8Array, _: BufferEncoding, callback: (error?: Error) => void): void;
 }
 export declare class ChannelStats {
-    sumOfSquares: number;
-    count: number;
-    peakValue: number;
-    maxRange: number;
+    private sumOfSquares;
+    private count;
+    private peakValue;
+    private readonly maxRange;
     constructor(maxRange: number);
     update(sample: number): void;
     get rootMeanSquare(): number;

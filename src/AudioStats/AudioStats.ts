@@ -8,7 +8,7 @@ import {getMethodName} from '../Utils/General/GetMethodName';
 
 export class AudioStats extends Writable {
 	channels: ChannelStats[];
-	currentChannel = 0;
+	private currentChannel = 0;
 	private readonly inputParams: InputParams;
 
 	constructor(inputParams: InputParams) {
@@ -49,10 +49,10 @@ export class AudioStats extends Writable {
 }
 
 export class ChannelStats {
-	sumOfSquares: number;
-	count: number;
-	peakValue: number;
-	maxRange: number;
+	private sumOfSquares: number;
+	private count: number;
+	private peakValue: number;
+	private readonly maxRange: number;
 
 	constructor(maxRange: number) {
 		this.sumOfSquares = 0;
