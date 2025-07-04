@@ -8,8 +8,8 @@ import {getMethodName} from '../Utils/General/GetMethodName';
 
 export class AudioStats extends Writable {
 	channels: ChannelStats[];
+	readonly statsParams: StatsParams;
 	private currentChannel = 0;
-	private readonly statsParams: StatsParams;
 
 	constructor(statsParams: StatsParams) {
 		super();
