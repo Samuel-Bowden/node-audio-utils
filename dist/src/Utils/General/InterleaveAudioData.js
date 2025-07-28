@@ -11,10 +11,12 @@ function interleaveAudioData(audioData, params) {
     const interleavedData = new ModifiedDataView_1.ModifiedDataView(newData.buffer);
     const getSampleMethod = `get${(0, GetMethodName_1.getMethodName)(params.bitDepth, params.unsigned)}`;
     const setSampleMethod = `set${(0, GetMethodName_1.getMethodName)(params.bitDepth, params.unsigned)}`;
-    for (let index = 0; index < audioData[0].byteLength; index += bytesPerElement) {
-        const samples = audioData.map(data => data[getSampleMethod](index, isLe));
-        for (let j = 0; j < samples.length; j++) {
-            interleavedData[setSampleMethod]((index * samples.length) + (bytesPerElement * j), samples[j], isLe);
+    for (let index = 0; index < audioData[0].byteLength; index += bytesPerElement * params.channels) {
+        for (let channel = 0; channel < params.channels; channel++) {
+            for (let audioDataIndex = 0; audioDataIndex < audioData.length; audioDataIndex++) {
+                const sampleValue = audioData[audioDataIndex][getSampleMethod](index + (bytesPerElement * channel), isLe);
+                interleavedData[setSampleMethod]((index * audioData.length) + (bytesPerElement * (channel + (audioDataIndex * params.channels))), sampleValue, isLe);
+            }
         }
     }
     return interleavedData;

@@ -27,7 +27,6 @@ export type InterleaverParams = {
 	generateSilence?: boolean;
 	silentDuration?: number;
 	delayTime?: DelayTimeType;
-	channels: 1; // Only allow 1 channel
 } & BasedParams;
 
 export type InputParams = {

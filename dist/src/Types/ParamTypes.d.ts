@@ -23,7 +23,6 @@ export type InterleaverParams = {
     generateSilence?: boolean;
     silentDuration?: number;
     delayTime?: DelayTimeType;
-    channels: 1;
 } & BasedParams;
 export type InputParams = {
     forceClose?: boolean;
