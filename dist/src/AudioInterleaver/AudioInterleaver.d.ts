@@ -13,6 +13,7 @@ export declare class AudioInterleaver extends Readable {
     set params(params: OmitSomeParams<InterleaverParams>);
     _read(): void;
     _destroy(error: Error, callback: (error?: Error) => void): void;
-    createAudioInput(inputParams: InputParams): AudioInput;
+    createAudioInput(inputParams: InputParams, index: number): AudioInput;
+    changeAudioInputIndex(audioInput: AudioInput, index: number): boolean;
     removeAudioinput(audioInput: AudioInput): boolean;
 }

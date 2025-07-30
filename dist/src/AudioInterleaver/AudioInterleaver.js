@@ -64,12 +64,26 @@ class AudioInterleaver extends stream_1.Readable {
         }
         callback(error);
     }
-    createAudioInput(inputParams) {
+    createAudioInput(inputParams, index) {
         const audioInput = new AudioInput_1.AudioInput(inputParams, this.interleaverParams, this.removeAudioinput.bind(this));
-        this.inputs.push(audioInput);
+        if (index >= this.inputs.length) {
+            this.inputs.push(audioInput);
+        }
+        else {
+            this.inputs.splice(index, 0, audioInput);
+        }
         this.isWork ||= true;
         this.emit('createInput');
         return audioInput;
+    }
+    changeAudioInputIndex(audioInput, index) {
+        const findAudioInput = this.inputs.indexOf(audioInput);
+        if (findAudioInput !== -1) {
+            const [temp] = this.inputs.splice(findAudioInput, 1);
+            this.inputs.splice(index, 0, temp);
+            return true;
+        }
+        return false;
     }
     removeAudioinput(audioInput) {
         const findAudioInput = this.inputs.indexOf(audioInput);

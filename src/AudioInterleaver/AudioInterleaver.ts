@@ -90,15 +90,32 @@ export class AudioInterleaver extends Readable {
 		callback(error);
 	}
 
-	public createAudioInput(inputParams: InputParams): AudioInput {
+	public createAudioInput(inputParams: InputParams, index: number): AudioInput {
 		const audioInput = new AudioInput(inputParams, this.interleaverParams, this.removeAudioinput.bind(this));
 
-		this.inputs.push(audioInput);
+		if (index >= this.inputs.length) {
+			this.inputs.push(audioInput);
+		} else {
+			this.inputs.splice(index, 0, audioInput);
+		}
+
 		this.isWork ||= true;
 
 		this.emit('createInput');
 
 		return audioInput;
+	}
+
+	public changeAudioInputIndex(audioInput: AudioInput, index: number) {
+		const findAudioInput = this.inputs.indexOf(audioInput);
+
+		if (findAudioInput !== -1) {
+			const [temp] = this.inputs.splice(findAudioInput, 1);
+			this.inputs.splice(index, 0, temp);
+			return true;
+		}
+
+		return false;
 	}
 
 	public removeAudioinput(audioInput: AudioInput): boolean {
