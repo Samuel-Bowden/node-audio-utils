@@ -26,6 +26,7 @@ class AudioInput extends stream_1.Writable {
         return this.closed ? (this.mixerParams.highWaterMark ?? this.audioData.length) : this.audioData.length;
     }
     _write(chunk, _, callback) {
+        let processedLength = 0;
         if (!this.closed) {
             if (this.inputParams.preProcessData) {
                 chunk = this.inputParams.preProcessData(chunk);
@@ -36,6 +37,7 @@ class AudioInput extends stream_1.Writable {
             }
             if (chunk.length > 0) {
                 const processedData = this.processData(chunk);
+                processedLength = processedData.length;
                 const newSize = this.audioData.length + processedData.length;
                 const tempChunk = new Uint8Array(newSize);
                 tempChunk.set(this.audioData, 0);
@@ -44,6 +46,7 @@ class AudioInput extends stream_1.Writable {
             }
         }
         callback();
+        return processedLength;
     }
     _destroy(error, callback) {
         if (!this.closed) {

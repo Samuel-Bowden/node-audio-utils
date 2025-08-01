@@ -44,7 +44,9 @@ export class AudioInput extends Writable {
 		return this.closed ? (this.mixerParams.highWaterMark ?? this.audioData.length) : this.audioData.length;
 	}
 
-	public _write(chunk: Uint8Array, _: BufferEncoding, callback: (error?: Error) => void): void {
+	public _write(chunk: Uint8Array, _: BufferEncoding, callback: (error?: Error) => void): number {
+		let processedLength = 0;
+
 		if (!this.closed) {
 			if (this.inputParams.preProcessData) {
 				chunk = this.inputParams.preProcessData(chunk);
@@ -59,6 +61,8 @@ export class AudioInput extends Writable {
 			if (chunk.length > 0) {
 				const processedData = this.processData(chunk);
 
+				processedLength = processedData.length;
+
 				const newSize = this.audioData.length + processedData.length;
 
 				const tempChunk = new Uint8Array(newSize);
@@ -70,6 +74,8 @@ export class AudioInput extends Writable {
 		}
 
 		callback();
+
+		return processedLength;
 	}
 
 	public _destroy(error: Error, callback: (error?: Error) => void): void {
