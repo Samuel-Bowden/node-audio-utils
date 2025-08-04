@@ -12,6 +12,7 @@ export declare class AudioInput extends Writable {
     get params(): Readonly<InputParams>;
     set params(params: OmitSomeParams<InputParams>);
     get dataSize(): number;
+    clear(): void;
     _write(chunk: Uint8Array, _: BufferEncoding, callback: (error?: Error) => void): number;
     _destroy(error: Error, callback: (error?: Error) => void): void;
     getData(size: number): Uint8Array;

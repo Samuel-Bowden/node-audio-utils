@@ -44,6 +44,10 @@ export class AudioInput extends Writable {
 		return this.closed ? (this.mixerParams.highWaterMark ?? this.audioData.length) : this.audioData.length;
 	}
 
+	public clear(): void {
+		this.audioData = new Uint8Array(0);
+	}
+
 	public _write(chunk: Uint8Array, _: BufferEncoding, callback: (error?: Error) => void): number {
 		let processedLength = 0;
 
