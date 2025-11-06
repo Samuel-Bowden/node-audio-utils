@@ -16,6 +16,7 @@ export type MixerParams = {
     generateSilence?: boolean;
     silentDuration?: number;
     delayTime?: DelayTimeType;
+    maxBufferLength?: number;
 } & BasedParams;
 export type InterleaverParams = {
     autoClose?: boolean;
@@ -23,6 +24,7 @@ export type InterleaverParams = {
     generateSilence?: boolean;
     silentDuration?: number;
     delayTime?: DelayTimeType;
+    maxBufferLength?: number;
 } & BasedParams;
 export type InputParams = {
     forceClose?: boolean;

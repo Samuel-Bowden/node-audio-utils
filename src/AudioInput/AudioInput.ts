@@ -67,11 +67,18 @@ export class AudioInput extends Writable {
 
 				processedLength = processedData.length;
 
-				const newSize = this.audioData.length + processedData.length;
+				let newSize = this.audioData.length + processedData.length;
+
+				let head = this.audioData;
+
+				if (this.mixerParams.maxBufferLength !== undefined && newSize > this.mixerParams.maxBufferLength) {
+					head = this.audioData.subarray(newSize - this.mixerParams.maxBufferLength);
+					newSize = this.mixerParams.maxBufferLength;
+				}
 
 				const tempChunk = new Uint8Array(newSize);
-				tempChunk.set(this.audioData, 0);
-				tempChunk.set(processedData, this.audioData.length);
+				tempChunk.set(head, 0);
+				tempChunk.set(processedData, head.length);
 
 				this.audioData = tempChunk;
 			}

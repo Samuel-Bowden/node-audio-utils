@@ -19,6 +19,7 @@ export type MixerParams = {
 	generateSilence?: boolean;
 	silentDuration?: number;
 	delayTime?: DelayTimeType;
+	maxBufferLength?: number;
 } & BasedParams;
 
 export type InterleaverParams = {
@@ -27,6 +28,7 @@ export type InterleaverParams = {
 	generateSilence?: boolean;
 	silentDuration?: number;
 	delayTime?: DelayTimeType;
+	maxBufferLength?: number;
 } & BasedParams;
 
 export type InputParams = {
