@@ -2,5 +2,6 @@ import { AudioMixer } from './AudioMixer/AudioMixer';
 import { AudioInput } from './AudioInput/AudioInput';
 import { AudioInterleaver } from './AudioInterleaver/AudioInterleaver';
 import { AudioStats } from './AudioStats/AudioStats';
+import { gainToDecibels, decibelsToGain } from './Units/Units';
 import { type SampleRate, type BitDepth, type Endianness, isSampleRate, isBitDepth } from './Types/AudioTypes';
-export { AudioMixer, AudioInterleaver, AudioStats, AudioInput, type SampleRate, type BitDepth, type Endianness, isSampleRate, isBitDepth, };
+export { AudioMixer, AudioInterleaver, AudioStats, AudioInput, type SampleRate, type BitDepth, type Endianness, isSampleRate, isBitDepth, gainToDecibels, decibelsToGain, };
