@@ -4,15 +4,17 @@ import {type IntType, type BitDepth} from '../../Types/AudioTypes';
 
 import {isLittleEndian} from '../General/IsLittleEndian';
 import {getMethodName} from '../General/GetMethodName';
-import {getValueRange} from '../General/GetValueRange';
 
-export function changeVolume(audioData: ModifiedDataView, params: InputParams | MixerParams): void {
+export function applyGateThreshold(audioData: ModifiedDataView, params: InputParams | MixerParams): void {
 	const bytesPerElement = params.bitDepth / 8;
-	const volume = (params.volume!) / 100;
-
 	const isLe = isLittleEndian(params.endianness);
 
-	const valueRange = getValueRange(params.bitDepth, false);
+	const halfRange = (2 ** params.bitDepth) / 2;
+	const equilibrium = params.unsigned ? halfRange : 0;
+	const threshold = halfRange * ((params.gateThreshold!) / 100);
+
+	const upperBound = equilibrium + threshold - 1;
+	const lowerBound = equilibrium - threshold;
 
 	const getSampleMethod: `get${IntType}${BitDepth}` = `get${getMethodName(params.bitDepth, params.unsigned)}`;
 	const setSampleMethod: `set${IntType}${BitDepth}` = `set${getMethodName(params.bitDepth, params.unsigned)}`;
@@ -20,12 +22,8 @@ export function changeVolume(audioData: ModifiedDataView, params: InputParams | 
 	for (let index = 0; index < audioData.byteLength; index += bytesPerElement) {
 		const sample = audioData[getSampleMethod](index, isLe);
 
-		const volumedSample = params.unsigned
-			? ((sample - valueRange.max) * volume) + valueRange.max
-			: sample * volume;
+		const gatedSample = sample <= lowerBound || sample >= upperBound ? sample : equilibrium;
 
-		audioData[setSampleMethod](index, volumedSample, isLe);
+		audioData[setSampleMethod](index, gatedSample, isLe);
 	}
-
-	params.volume = 100;
 }

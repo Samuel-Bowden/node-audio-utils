@@ -36,6 +36,7 @@ class AudioMixer extends stream_1.Readable {
             let mixedData = this.audioUtils.setAudioData(dataCollection)
                 .mix()
                 .checkVolume()
+                .applyGateThreshold()
                 .getAudioData();
             if (this.mixerParams.preProcessData) {
                 mixedData = this.mixerParams.preProcessData(mixedData);

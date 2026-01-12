@@ -10,6 +10,7 @@ type BasedParams = {
 	endianness?: Endianness;
 	unsigned?: boolean;
 	volume?: number;
+	gateThreshold?: number;
 	preProcessData?: PreProcessFunction;
 };
 

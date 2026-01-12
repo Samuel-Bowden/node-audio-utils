@@ -10,5 +10,6 @@ export declare class MixerUtils implements AudioUtils {
     setAudioData(audioData: Uint8Array[]): this;
     mix(): this;
     checkVolume(): this;
+    applyGateThreshold(): this;
     getAudioData(): Uint8Array;
 }

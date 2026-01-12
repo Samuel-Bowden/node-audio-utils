@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MixerUtils = void 0;
 const _hangeVolume_1 = require("./AudioUtils/\u0421hangeVolume");
+const ApplyGateThreshold_1 = require("./AudioUtils/ApplyGateThreshold");
 const ModifiedDataView_1 = require("../ModifiedDataView/ModifiedDataView");
 const MixAudioData_1 = require("./General/MixAudioData");
 class MixerUtils {
@@ -30,6 +31,12 @@ class MixerUtils {
         const volume = this.audioMixerParams.volume ?? 100;
         if (volume !== 100) {
             (0, _hangeVolume_1.changeVolume)(this.mixedData, this.changedParams);
+        }
+        return this;
+    }
+    applyGateThreshold() {
+        if (this.audioMixerParams.gateThreshold !== undefined) {
+            (0, ApplyGateThreshold_1.applyGateThreshold)(this.mixedData, this.changedParams);
         }
         return this;
     }
