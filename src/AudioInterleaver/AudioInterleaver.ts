@@ -11,9 +11,6 @@ export class AudioInterleaver extends Readable {
 	private readonly interleaverParams: InterleaverParams;
 	private readonly audioUtils: InterleaverUtils;
 
-	private readonly delayTimeValue;
-	private isWork = false;
-
 	private readonly inputs: AudioInput[] = [];
 
 	constructor(params: InterleaverParams) {
@@ -21,12 +18,6 @@ export class AudioInterleaver extends Readable {
 
 		this.interleaverParams = params;
 		this.audioUtils = new InterleaverUtils(params);
-
-		if (params.delayTime && typeof params.delayTime === 'number') {
-			this.delayTimeValue = params.delayTime;
-		} else {
-			this.delayTimeValue = 1;
-		}
 	}
 
 	public get inputLength(): number {
@@ -53,30 +44,11 @@ export class AudioInterleaver extends Readable {
 			const availableInputs = this.inputs.filter((input: AudioInput) => input.dataSize >= minDataSize);
 			const dataCollection: Uint8Array[] = availableInputs.map((input: AudioInput) => input.getData(minDataSize));
 
-			let interleavedData = this.audioUtils.setAudioData(dataCollection)
+			const interleavedData = this.audioUtils.setAudioData(dataCollection)
 				.interleave()
 				.getAudioData();
 
-			if (this.interleaverParams.preProcessData) {
-				interleavedData = this.interleaverParams.preProcessData(interleavedData);
-			}
-
 			this.unshift(interleavedData);
-
-			return;
-		}
-
-		if (this.interleaverParams.generateSilence) {
-			const silentSize = ((this.interleaverParams.sampleRate * this.interleaverParams.channels) / 1000) * (this.interleaverParams.silentDuration ?? this.delayTimeValue);
-			const silentData = new Uint8Array(silentSize);
-
-			this.unshift(silentData);
-		}
-
-		if (this.isWork) {
-			if (this.inputs.length === 0 && this.interleaverParams.autoClose) {
-				this.destroy();
-			}
 		}
 	}
 
@@ -99,10 +71,6 @@ export class AudioInterleaver extends Readable {
 			this.inputs.splice(index, 0, audioInput);
 		}
 
-		this.isWork ||= true;
-
-		this.emit('createInput');
-
 		return audioInput;
 	}
 
@@ -123,8 +91,6 @@ export class AudioInterleaver extends Readable {
 
 		if (findAudioInput !== -1) {
 			this.inputs.splice(findAudioInput, 1);
-
-			this.emit('removeInput');
 
 			return true;
 		}

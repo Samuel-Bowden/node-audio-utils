@@ -8,16 +8,9 @@ const InterleaverUtils_1 = require("../Utils/InterleaverUtils");
 class AudioInterleaver extends stream_1.Readable {
     constructor(params) {
         super();
-        this.isWork = false;
         this.inputs = [];
         this.interleaverParams = params;
         this.audioUtils = new InterleaverUtils_1.InterleaverUtils(params);
-        if (params.delayTime && typeof params.delayTime === 'number') {
-            this.delayTimeValue = params.delayTime;
-        }
-        else {
-            this.delayTimeValue = 1;
-        }
     }
     get inputLength() {
         return this.inputs.length;
@@ -36,24 +29,10 @@ class AudioInterleaver extends stream_1.Readable {
             const minDataSize = this.interleaverParams.highWaterMark ?? Math.min(...allInputsSize);
             const availableInputs = this.inputs.filter((input) => input.dataSize >= minDataSize);
             const dataCollection = availableInputs.map((input) => input.getData(minDataSize));
-            let interleavedData = this.audioUtils.setAudioData(dataCollection)
+            const interleavedData = this.audioUtils.setAudioData(dataCollection)
                 .interleave()
                 .getAudioData();
-            if (this.interleaverParams.preProcessData) {
-                interleavedData = this.interleaverParams.preProcessData(interleavedData);
-            }
             this.unshift(interleavedData);
-            return;
-        }
-        if (this.interleaverParams.generateSilence) {
-            const silentSize = ((this.interleaverParams.sampleRate * this.interleaverParams.channels) / 1000) * (this.interleaverParams.silentDuration ?? this.delayTimeValue);
-            const silentData = new Uint8Array(silentSize);
-            this.unshift(silentData);
-        }
-        if (this.isWork) {
-            if (this.inputs.length === 0 && this.interleaverParams.autoClose) {
-                this.destroy();
-            }
         }
     }
     _destroy(error, callback) {
@@ -72,8 +51,6 @@ class AudioInterleaver extends stream_1.Readable {
         else {
             this.inputs.splice(index, 0, audioInput);
         }
-        this.isWork ||= true;
-        this.emit('createInput');
         return audioInput;
     }
     changeAudioInputIndex(audioInput, index) {
@@ -89,7 +66,6 @@ class AudioInterleaver extends stream_1.Readable {
         const findAudioInput = this.inputs.indexOf(audioInput);
         if (findAudioInput !== -1) {
             this.inputs.splice(findAudioInput, 1);
-            this.emit('removeInput');
             return true;
         }
         return false;

@@ -8,16 +8,9 @@ const AudioInput_1 = require("../AudioInput/AudioInput");
 class AudioMixer extends stream_1.Readable {
     constructor(params) {
         super();
-        this.isWork = false;
         this.inputs = [];
         this.mixerParams = params;
         this.audioUtils = new MixerUtils_1.MixerUtils(params);
-        if (params.delayTime && typeof params.delayTime === 'number') {
-            this.delayTimeValue = params.delayTime;
-        }
-        else {
-            this.delayTimeValue = 1;
-        }
     }
     get params() {
         return this.mixerParams;
@@ -33,26 +26,12 @@ class AudioMixer extends stream_1.Readable {
             const minDataSize = this.mixerParams.highWaterMark ?? Math.min(...allInputsSize);
             const availableInputs = this.inputs.filter((input) => input.dataSize >= minDataSize);
             const dataCollection = availableInputs.map((input) => input.getData(minDataSize));
-            let mixedData = this.audioUtils.setAudioData(dataCollection)
+            const mixedData = this.audioUtils.setAudioData(dataCollection)
                 .mix()
                 .checkVolume()
                 .applyGateThreshold()
                 .getAudioData();
-            if (this.mixerParams.preProcessData) {
-                mixedData = this.mixerParams.preProcessData(mixedData);
-            }
             this.unshift(mixedData);
-            return;
-        }
-        if (this.mixerParams.generateSilence) {
-            const silentSize = ((this.mixerParams.sampleRate * this.mixerParams.channels) / 1000) * (this.mixerParams.silentDuration ?? this.delayTimeValue);
-            const silentData = new Uint8Array(silentSize);
-            this.unshift(silentData);
-        }
-        if (this.isWork) {
-            if (this.inputs.length === 0 && this.mixerParams.autoClose) {
-                this.destroy();
-            }
         }
     }
     _destroy(error, callback) {
@@ -66,15 +45,12 @@ class AudioMixer extends stream_1.Readable {
     createAudioInput(inputParams) {
         const audioInput = new AudioInput_1.AudioInput(inputParams, this.mixerParams, this.removeAudioinput.bind(this));
         this.inputs.push(audioInput);
-        this.isWork ||= true;
-        this.emit('createInput');
         return audioInput;
     }
     removeAudioinput(audioInput) {
         const findAudioInput = this.inputs.indexOf(audioInput);
         if (findAudioInput !== -1) {
             this.inputs.splice(findAudioInput, 1);
-            this.emit('removeInput');
             return true;
         }
         return false;

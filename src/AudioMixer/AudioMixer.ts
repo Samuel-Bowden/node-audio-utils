@@ -11,9 +11,6 @@ export class AudioMixer extends Readable {
 	private readonly mixerParams: MixerParams;
 	private readonly audioUtils: MixerUtils;
 
-	private readonly delayTimeValue;
-	private isWork = false;
-
 	private readonly inputs: AudioInput[] = [];
 
 	constructor(params: MixerParams) {
@@ -21,12 +18,6 @@ export class AudioMixer extends Readable {
 
 		this.mixerParams = params;
 		this.audioUtils = new MixerUtils(params);
-
-		if (params.delayTime && typeof params.delayTime === 'number') {
-			this.delayTimeValue = params.delayTime;
-		} else {
-			this.delayTimeValue = 1;
-		}
 	}
 
 	get params(): Readonly<MixerParams> {
@@ -49,32 +40,13 @@ export class AudioMixer extends Readable {
 			const availableInputs = this.inputs.filter((input: AudioInput) => input.dataSize >= minDataSize);
 			const dataCollection: Uint8Array[] = availableInputs.map((input: AudioInput) => input.getData(minDataSize));
 
-			let mixedData = this.audioUtils.setAudioData(dataCollection)
+			const mixedData = this.audioUtils.setAudioData(dataCollection)
 				.mix()
 				.checkVolume()
 				.applyGateThreshold()
 				.getAudioData();
 
-			if (this.mixerParams.preProcessData) {
-				mixedData = this.mixerParams.preProcessData(mixedData);
-			}
-
 			this.unshift(mixedData);
-
-			return;
-		}
-
-		if (this.mixerParams.generateSilence) {
-			const silentSize = ((this.mixerParams.sampleRate * this.mixerParams.channels) / 1000) * (this.mixerParams.silentDuration ?? this.delayTimeValue);
-			const silentData = new Uint8Array(silentSize);
-
-			this.unshift(silentData);
-		}
-
-		if (this.isWork) {
-			if (this.inputs.length === 0 && this.mixerParams.autoClose) {
-				this.destroy();
-			}
 		}
 	}
 
@@ -92,9 +64,6 @@ export class AudioMixer extends Readable {
 		const audioInput = new AudioInput(inputParams, this.mixerParams, this.removeAudioinput.bind(this));
 
 		this.inputs.push(audioInput);
-		this.isWork ||= true;
-
-		this.emit('createInput');
 
 		return audioInput;
 	}
@@ -104,8 +73,6 @@ export class AudioMixer extends Readable {
 
 		if (findAudioInput !== -1) {
 			this.inputs.splice(findAudioInput, 1);
-
-			this.emit('removeInput');
 
 			return true;
 		}

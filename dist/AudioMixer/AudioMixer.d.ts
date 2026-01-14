@@ -4,8 +4,6 @@ import { AudioInput } from '../AudioInput/AudioInput';
 export declare class AudioMixer extends Readable {
     private readonly mixerParams;
     private readonly audioUtils;
-    private readonly delayTimeValue;
-    private isWork;
     private readonly inputs;
     constructor(params: MixerParams);
     get params(): Readonly<MixerParams>;

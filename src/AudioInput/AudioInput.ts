@@ -52,10 +52,6 @@ export class AudioInput extends Writable {
 		let processedLength = 0;
 
 		if (!this.closed) {
-			if (this.inputParams.preProcessData) {
-				chunk = this.inputParams.preProcessData(chunk);
-			}
-
 			const bytesPerElement = this.inputParams.bitDepth / 8;
 
 			if (chunk.length % bytesPerElement !== 0) {
@@ -91,7 +87,7 @@ export class AudioInput extends Writable {
 
 	public _destroy(error: Error, callback: (error?: Error) => void): void {
 		if (!this.closed) {
-			if ((this.audioData.length === 0 && this.correctionBuffer.length === 0) || this.inputParams.forceClose) {
+			if ((this.audioData.length === 0 && this.correctionBuffer.length === 0)) {
 				this.removeInputSelf();
 
 				return;

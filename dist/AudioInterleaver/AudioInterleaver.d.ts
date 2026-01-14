@@ -4,8 +4,6 @@ import { AudioInput } from '../AudioInput/AudioInput';
 export declare class AudioInterleaver extends Readable {
     private readonly interleaverParams;
     private readonly audioUtils;
-    private readonly delayTimeValue;
-    private isWork;
     private readonly inputs;
     constructor(params: InterleaverParams);
     get inputLength(): number;
