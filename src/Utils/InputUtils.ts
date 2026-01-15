@@ -12,7 +12,7 @@ import {changeBitDepth} from './AudioUtils/ChangeBitDepth';
 import {changeSampleRate} from './AudioUtils/СhangeSampleRate';
 import {changeChannelsCount} from './AudioUtils/СhangeChannelsCount';
 import {changeEndianness} from './AudioUtils/ChangeEndianness';
-import {applyGateThreshold} from './AudioUtils/ApplyGateThreshold';
+import {applyGate} from './AudioUtils/ApplyGate';
 
 export class InputUtils implements AudioUtils {
 	private readonly audioInputParams: InputParams;
@@ -87,9 +87,9 @@ export class InputUtils implements AudioUtils {
 		return this;
 	}
 
-	public applyGateThreshold(): this {
+	public applyGate(): this {
 		if (this.changedParams.gateThreshold !== undefined) {
-			applyGateThreshold(this.audioData, this.changedParams, this.gateState);
+			applyGate(this.audioData, this.changedParams, this.gateState);
 		}
 
 		return this;

@@ -6,7 +6,7 @@ import {type GateState} from '../GateState';
 import {isLittleEndian} from '../General/IsLittleEndian';
 import {getMethodName} from '../General/GetMethodName';
 
-export function applyGateThreshold(audioData: ModifiedDataView, params: InputParams | MixerParams, gateState: GateState): void {
+export function applyGate(audioData: ModifiedDataView, params: InputParams | MixerParams, gateState: GateState): void {
 	const bytesPerElement = params.bitDepth / 8;
 	const isLe = isLittleEndian(params.endianness);
 

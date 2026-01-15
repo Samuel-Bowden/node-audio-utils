@@ -3,7 +3,7 @@ import {type MixerParams} from '../Types/ParamTypes';
 import {type GateState} from './GateState';
 
 import {changeVolume} from './AudioUtils/СhangeVolume';
-import {applyGateThreshold} from './AudioUtils/ApplyGateThreshold';
+import {applyGate} from './AudioUtils/ApplyGate';
 
 import {ModifiedDataView} from '../ModifiedDataView/ModifiedDataView';
 import {mixAudioData} from './General/MixAudioData';
@@ -57,9 +57,9 @@ export class MixerUtils implements AudioUtils {
 		return this;
 	}
 
-	public applyGateThreshold(): this {
+	public applyGate(): this {
 		if (this.audioMixerParams.gateThreshold !== undefined) {
-			applyGateThreshold(this.mixedData, this.changedParams, this.gateState);
+			applyGate(this.mixedData, this.changedParams, this.gateState);
 		}
 
 		return this;

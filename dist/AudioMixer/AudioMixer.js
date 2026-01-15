@@ -29,7 +29,7 @@ class AudioMixer extends stream_1.Readable {
             const mixedData = this.audioUtils.setAudioData(dataCollection)
                 .mix()
                 .checkVolume()
-                .applyGateThreshold()
+                .applyGate()
                 .getAudioData();
             this.unshift(mixedData);
         }

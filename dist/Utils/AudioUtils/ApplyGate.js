@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.applyGateThreshold = applyGateThreshold;
+exports.applyGate = applyGate;
 const IsLittleEndian_1 = require("../General/IsLittleEndian");
 const GetMethodName_1 = require("../General/GetMethodName");
-function applyGateThreshold(audioData, params, gateState) {
+function applyGate(audioData, params, gateState) {
     const bytesPerElement = params.bitDepth / 8;
     const isLe = (0, IsLittleEndian_1.isLittleEndian)(params.endianness);
     const halfRange = (2 ** params.bitDepth) / 2;

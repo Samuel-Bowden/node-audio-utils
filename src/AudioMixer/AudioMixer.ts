@@ -43,7 +43,7 @@ export class AudioMixer extends Readable {
 			const mixedData = this.audioUtils.setAudioData(dataCollection)
 				.mix()
 				.checkVolume()
-				.applyGateThreshold()
+				.applyGate()
 				.getAudioData();
 
 			this.unshift(mixedData);

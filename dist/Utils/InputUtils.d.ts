@@ -14,7 +14,7 @@ export declare class InputUtils implements AudioUtils {
     checkSampleRate(): this;
     checkChannelsCount(): this;
     checkVolume(): this;
-    applyGateThreshold(): this;
+    applyGate(): this;
     checkEndianness(): this;
     getAudioData(): Uint8Array;
 }
