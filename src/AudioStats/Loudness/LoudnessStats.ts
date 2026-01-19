@@ -1,13 +1,16 @@
 import {Writable} from 'stream';
 import {ModifiedDataView} from '../../ModifiedDataView/ModifiedDataView';
 import {isLittleEndian} from '../../Utils/General/IsLittleEndian';
-import {Endianness, SampleRate, type BitDepth, type IntType} from '../../Types/AudioTypes';
+import {
+	type Endianness, type SampleRate, type BitDepth, type IntType,
+} from '../../Types/AudioTypes';
 import {getMethodName} from '../../Utils/General/GetMethodName';
-import { KFilter } from './KFilter';
+import {KFilter} from './KFilter';
 
+/** Extracts samples from audio chunk according to bitDepth, endianness, etc. */
 abstract class AbstractWritable extends Writable {
-    /** Expected channel index of the next sample to be received */
-    private currentChannel = 0;
+	/** Expected channel index of the next sample to be received */
+	private currentChannel = 0;
 	constructor(readonly params: ChannelsInputParams) {
 		super();
 	}
@@ -21,105 +24,139 @@ abstract class AbstractWritable extends Writable {
 
 		for (let index = 0; index < audioData.byteLength; index += bytesPerElement) {
 			const sample = audioData[getSampleMethod](index, isLe);
-            this.onSample(this.currentChannel, sample);
+			this.onSample(this.currentChannel, sample);
 			this.currentChannel = (this.currentChannel + 1) % this.params.channels.length;
 		}
 
 		callback();
 	}
 
-    abstract onSample(channel: number, sample: number): void
+	abstract onSample(channel: number, sample: number): void;
 }
 
 /** Annex 1: https://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.1770-5-202311-I!!PDF-E.pdf */
 export class LoudnessStatsWritable extends AbstractWritable {
-    kFilters: KFilter[];
-    blockAccumulator: BlockAccumulator;
-    blocks: Block[] = [];
-    maxBlocksBufferSize: number;
-    LUFS = 0
+	// Stats:
+	public momentaryLUFS = 0;
+	public shortTermLUFS = 0;
+	public integratedLUFS = 0;
 
-    constructor(params: ChannelsInputParams, measurementIntervalMs: number) {
-        super(params);
-        this.kFilters = this.params.channels.map(() => new KFilter());
-        this.blockAccumulator = new BlockAccumulator(params.sampleRate, params.channels)
+	private readonly kFilters: KFilter[];
 
-        this.maxBlocksBufferSize = measurementIntervalMs / 400;
-    }
+	// 400ms and 3s blocks are for momentary and short-term loudness respectively.
+	// The 400ms blocks are also stored as "gating blocks" for the integrated loudness.
+	private readonly blockAccumulator3s: BlockAccumulator;
+	private readonly blockAccumulator400ms: BlockAccumulator;
 
-    onSample(channel: number, x: number): void {
-        const y = this.kFilters[channel].onSample(x);
-        const newBlock = this.blockAccumulator.addSample(channel, y);
-        if (newBlock) {
-            this.blocks.push(newBlock);
-            if (this.blocks.length > this.maxBlocksBufferSize) this.blocks.shift();
-            const absoluteThreshold = -70
-            const relativeThreshold = gatedLoudness(this.blocks, absoluteThreshold) - 10
-            this.LUFS = gatedLoudness(this.blocks, Math.max(absoluteThreshold, relativeThreshold))
-        }
-    }
+	private readonly gatingBlocks: Block[] = [];
+	private readonly maxGatingBlocksBufferSize: number;
+
+	constructor(params: ChannelsInputParams, integratedMeasurementIntervalMs: number) {
+		super(params);
+		this.kFilters = this.params.channels.map(() => new KFilter());
+
+		this.blockAccumulator3s = new BlockAccumulator(params.sampleRate, params.channels, 3000);
+		this.blockAccumulator400ms = new BlockAccumulator(params.sampleRate, params.channels, 400);
+
+		this.maxGatingBlocksBufferSize = integratedMeasurementIntervalMs / 400;
+	}
+
+	onSample(channel: number, x: number): void {
+		// Normalise
+		// ~TODO: account for signed
+		x = 2 * ((x / (2 ** this.params.bitDepth)) - 0.5);
+		const y = this.kFilters[channel].onSample(x);
+
+		const block3s = this.blockAccumulator3s.addSample(channel, y);
+		if (block3s) {
+			this.shortTermLUFS = block3s.loudness;
+		}
+
+		const block400ms = this.blockAccumulator400ms.addSample(channel, y);
+		if (block400ms) {
+			this.momentaryLUFS = block400ms.loudness;
+
+			this.gatingBlocks.push(block400ms);
+			if (this.gatingBlocks.length > this.maxGatingBlocksBufferSize) {
+				this.gatingBlocks.shift();
+			}
+
+			const absoluteThreshold = -70;
+			const relativeThreshold = gatedLoudness(this.gatingBlocks, absoluteThreshold) - 10;
+			this.integratedLUFS = gatedLoudness(this.gatingBlocks, Math.max(absoluteThreshold, relativeThreshold));
+		}
+	}
 }
 
 function gatedLoudness(blocks: Block[], threshold: number): number {
-    const filteredBlocks = blocks.filter(block => block.loudness > threshold)
-    const mean = filteredBlocks.reduce((acc, block) => acc + block.weightedMeanSquares, 0) / filteredBlocks.length
-    return -0.691 + 10 * Math.log10(mean)
+	const filteredBlocks = blocks.filter(block => block.loudness > threshold);
+	const mean = filteredBlocks.reduce((acc, block) => acc + block.weightedMeanSquares, 0) / filteredBlocks.length;
+	return -0.691 + (10 * Math.log10(mean));
 }
 
-/** Accumulated 400ms of samples */
 class Block {
-    /** The weighted sum of the mean squares power for each channel */
-    weightedMeanSquares: number;
-    loudness: number;
+	/** The weighted sum of the mean squares power for each channel */
+	public weightedMeanSquares: number;
+	public loudness: number;
 
-    constructor(samples: number[][], channelPositions: ChannelPosition[]) {
-        this.weightedMeanSquares = samples.reduce(
-            (acc, channelSamples, i) => acc + WEIGHTING(channelPositions[i]) * this.calcChannelPower(channelSamples)
-        , 0)
-        this.loudness = -0.691 + 10 * Math.log10(this.weightedMeanSquares)
-    }
+	constructor(samples: number[][], channelPositions: ChannelPosition[]) {
+		this.weightedMeanSquares = samples.reduce(
+			(acc, channelSamples, i) => acc + (weighting(channelPositions[i]) * this.calcChannelPower(channelSamples))
+			, 0,
+		);
+		this.loudness = -0.691 + (10 * Math.log10(this.weightedMeanSquares));
+	}
 
-    calcChannelPower(samples: number[]) {
-        const sumOfSquares = samples.reduce((acc, sample) => acc + sample ** 2, 0);
-        return sumOfSquares / samples.length;
-    }
+	calcChannelPower(samples: number[]) {
+		const sumOfSquares = samples.reduce((acc, sample) => acc + (sample ** 2), 0);
+		return sumOfSquares / samples.length;
+	}
 }
 
+/** Accumulates a duration of samples.
+ *  Momentary and Short-Term loudnesses are simply the loudness of a window of K-Filtered samples of duration 0.4 and 3s respectively.
+ *  Integrated loudness accumulates 0.4s "blocks" and applies gating.
+*/
 class BlockAccumulator {
-    /** buffer[channelIdx][sampleIdx] */
-    private buffer: number[][] = [];
+	/** Buffer[channelIdx][sampleIdx] */
+	private buffer: number[][] = [];
 
-    constructor(readonly sampleRate: SampleRate, readonly channelPositions: ChannelPosition[]) {
-        this.buffer = channelPositions.map(() => []);
-    }
+	constructor(readonly sampleRate: SampleRate, readonly channelPositions: ChannelPosition[], readonly targetDurationMs = 400) {
+		this.clearBuffer();
+	}
 
-    addSample(channel: number, sample: number): Block | undefined {
-        this.buffer[channel].push(sample);
-        // upon adding the final channel our buffers should have the same length since samples for each channel are added in sequence
-        const lastChannelIdx = this.channelPositions.length - 1 
-        if (channel === lastChannelIdx) {
-            const bufferDuration = this.buffer[lastChannelIdx].length / this.sampleRate;
-            if (bufferDuration > 0.4) {
-                const block = new Block(this.buffer, this.channelPositions)
-                this.buffer = [];
-                return block;
-            }
-        }
-        return undefined
-    }
+	addSample(channel: number, sample: number): Block | undefined {
+		this.buffer[channel].push(sample);
+		// Upon adding the final channel our buffers should have the same length since samples for each channel are added in sequence
+		const lastChannelIdx = this.channelPositions.length - 1;
+		if (channel === lastChannelIdx) {
+			const bufferDuration = this.buffer[lastChannelIdx].length / this.sampleRate;
+			if (bufferDuration > this.targetDurationMs / 1000) {
+				const block = new Block(this.buffer, this.channelPositions);
+				this.clearBuffer();
+				return block;
+			}
+		}
+
+		return undefined;
+	}
+
+	private clearBuffer() {
+		this.buffer = this.channelPositions.map(() => []);
+	}
 }
 
 export enum ChannelPosition {
-    Left,
-    Right,
-    Centre,
-    LeftSurround,
-    RightSurround,
-    LFE,
-    Other
+	Left,
+	Right,
+	Centre,
+	LeftSurround,
+	RightSurround,
+	LFE,
+	Other,
 }
 
-type ChannelsInputParams = {
+export type ChannelsInputParams = {
 	sampleRate: SampleRate;
 	channels: ChannelPosition[];
 	bitDepth: BitDepth;
@@ -127,14 +164,18 @@ type ChannelsInputParams = {
 	unsigned?: boolean;
 };
 
-function WEIGHTING(channelPosition: ChannelPosition) {
-    switch (channelPosition) {
-        case ChannelPosition.Left | ChannelPosition.Right | ChannelPosition.Centre:
-            return 1.0
-        case ChannelPosition.LeftSurround | ChannelPosition.RightSurround:
-            return 1.41
-        default:
-            throw new Error(`Channel position ${channelPosition} should never be used for weighting`)
-    }
+function weighting(channelPosition: ChannelPosition) {
+	switch (channelPosition) {
+		case ChannelPosition.Left:
+		case ChannelPosition.Right:
+		case ChannelPosition.Centre:
+			return 1.0;
+		case ChannelPosition.LeftSurround:
+		case ChannelPosition.RightSurround:
+			return 1.41;
+		case ChannelPosition.LFE:
+		case ChannelPosition.Other:
+			throw new Error(`Channel position ${ChannelPosition[channelPosition]} should never be used for weighting`);
+	}
 }
 

@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "eslint && tsc"
+    "build": "eslint && tsc",
+    "test": "mocha -r ts-node/register 'src/**/*.test.ts' --exit"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -26,12 +27,16 @@
   "authors": ["Alex Pl (https://github.com/AlexPl3331)", "Samuel Bowden (https://github.com/Samuel-Bowden)"],
   "license": "MIT",
   "devDependencies": {
+    "@types/chai": "^4.3.5",
+    "@types/mocha": "^10.0.1",
     "@types/node": "^22.5.4",
     "@typescript-eslint/eslint-plugin": "^8.5.0",
     "@typescript-eslint/parser": "^8.5.0",
+    "chai": "^4.3.7",
     "eslint": "^9.10.0",
     "eslint-config-xo-typescript": "^6.0.0",
     "globals": "^15.9.0",
+    "mocha": "^10.2.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.2"
   }
