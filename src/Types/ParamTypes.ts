@@ -13,6 +13,8 @@ type BasedParams = {
 	gateReleaseSamples?: number;
 	downwardCompressorThreshold?: number;
 	downwardCompressorRatio?: number;
+	downwardCompressorAttackSamples?: number;
+	downwardCompressorReleaseSamples?: number;
 };
 
 export type MixerParams = {
