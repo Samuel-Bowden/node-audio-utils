@@ -24,7 +24,6 @@ abstract class AbstractWritable extends Writable {
 			let sample = audioData[getSampleMethod](index, isLe);
 
 			// Normalise to [-1,1]
-			// ~TODO: account for signed input
 			sample = 2 * ((sample / (2 ** this.params.bitDepth)) - 0.5);
 
 			this.onSample(sample);
@@ -157,7 +156,7 @@ class BlockAccumulator {
 		let block;
 
 		// Upon adding the final channel we increment the pointer
-		if (this.currentChannel === this.channelPositions.length - 1) {
+		if (this.currentChannel === this.numChannels - 1) {
 			this.samplesUntillFull -= 1;
 			if (this.samplesUntillFull === 0) {
 				block = new Block(this.ringbuffer, this.channelPositions);
