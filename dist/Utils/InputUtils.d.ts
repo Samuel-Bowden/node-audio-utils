@@ -7,6 +7,7 @@ export declare class InputUtils implements AudioUtils {
     private readonly emptyData;
     private audioData;
     private readonly gateState;
+    private readonly downwardCompressorState;
     constructor(inputParams: InputParams, mixerParams: MixerParams);
     setAudioData(audioData: Uint8Array): this;
     checkIntType(): this;

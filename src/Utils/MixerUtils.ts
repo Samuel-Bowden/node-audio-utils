@@ -1,6 +1,6 @@
 import {type AudioUtils} from '../Types/AudioUtils';
 import {type MixerParams} from '../Types/ParamTypes';
-import {type GateState} from './GateState';
+import {type DownwardCompressorState, type GateState} from './State';
 
 import {changeVolume} from './AudioUtils/СhangeVolume';
 import {applyGate} from './AudioUtils/ApplyGate';
@@ -19,6 +19,7 @@ export class MixerUtils implements AudioUtils {
 	private mixedData: ModifiedDataView;
 
 	private readonly gateState: GateState;
+	private readonly downwardCompressorState: DownwardCompressorState;
 
 	constructor(mixerParams: MixerParams) {
 		this.audioMixerParams = mixerParams;
@@ -28,6 +29,8 @@ export class MixerUtils implements AudioUtils {
 		this.mixedData = new ModifiedDataView(this.emptyData.buffer);
 
 		this.gateState = {holdSamplesRemaining: mixerParams.gateHoldSamples, attenuation: 1};
+
+		this.downwardCompressorState = {ratio: 1};
 	}
 
 	public setAudioData(audioData: Uint8Array[]): this {
@@ -68,7 +71,7 @@ export class MixerUtils implements AudioUtils {
 
 	public applyDownwardCompressor(): this {
 		if (this.audioMixerParams.downwardCompressorThreshold !== undefined) {
-			applyDownwardCompressor(this.mixedData, this.changedParams);
+			applyDownwardCompressor(this.mixedData, this.changedParams, this.downwardCompressorState);
 		}
 
 		return this;

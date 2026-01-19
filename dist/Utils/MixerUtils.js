@@ -14,6 +14,7 @@ class MixerUtils {
         this.changedParams = { ...this.audioMixerParams };
         this.mixedData = new ModifiedDataView_1.ModifiedDataView(this.emptyData.buffer);
         this.gateState = { holdSamplesRemaining: mixerParams.gateHoldSamples, attenuation: 1 };
+        this.downwardCompressorState = { ratio: 1 };
     }
     setAudioData(audioData) {
         this.dataCollection = audioData.map((audioData) => new ModifiedDataView_1.ModifiedDataView(audioData.buffer));
@@ -44,7 +45,7 @@ class MixerUtils {
     }
     applyDownwardCompressor() {
         if (this.audioMixerParams.downwardCompressorThreshold !== undefined) {
-            (0, ApplyDownwardCompressor_1.applyDownwardCompressor)(this.mixedData, this.changedParams);
+            (0, ApplyDownwardCompressor_1.applyDownwardCompressor)(this.mixedData, this.changedParams, this.downwardCompressorState);
         }
         return this;
     }

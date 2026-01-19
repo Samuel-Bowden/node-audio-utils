@@ -4,35 +4,30 @@ exports.applyDownwardCompressor = applyDownwardCompressor;
 const IsLittleEndian_1 = require("../General/IsLittleEndian");
 const GetMethodName_1 = require("../General/GetMethodName");
 const ConvertThreshold_1 = require("../General/ConvertThreshold");
-function applyDownwardCompressor(audioData, params) {
+function applyDownwardCompressor(audioData, params, downwardCompressorState) {
     const bytesPerElement = params.bitDepth / 8;
     const isLe = (0, IsLittleEndian_1.isLittleEndian)(params.endianness);
-    const { upperThreshold, lowerThreshold } = (0, ConvertThreshold_1.convertThreshold)(params.bitDepth, params.unsigned, params.downwardCompressorThreshold);
-    const ratio = params.downwardCompressorRatio;
+    const { upperThreshold, lowerThreshold, equilibrium } = (0, ConvertThreshold_1.convertThreshold)(params.bitDepth, params.unsigned, params.downwardCompressorThreshold);
     const getSampleMethod = `get${(0, GetMethodName_1.getMethodName)(params.bitDepth, params.unsigned)}`;
     const setSampleMethod = `set${(0, GetMethodName_1.getMethodName)(params.bitDepth, params.unsigned)}`;
+    const ratio = params.downwardCompressorRatio ?? Number.MAX_SAFE_INTEGER;
     for (let index = 0; index < audioData.byteLength; index += bytesPerElement) {
         const sample = audioData[getSampleMethod](index, isLe);
-        let compressedSample;
-        if (sample > upperThreshold) {
-            if (ratio === undefined) {
-                compressedSample = upperThreshold;
+        const threshold = sample >= equilibrium ? upperThreshold : lowerThreshold;
+        if (sample > upperThreshold || sample < lowerThreshold) {
+            if (params.downwardCompressorAttackSamples === undefined) {
+                downwardCompressorState.ratio = ratio;
             }
             else {
-                compressedSample = ((sample - upperThreshold) / ratio) + upperThreshold;
+                downwardCompressorState.ratio = Math.min(downwardCompressorState.ratio + (ratio / params.downwardCompressorAttackSamples), ratio);
             }
         }
-        else if (sample < lowerThreshold) {
-            if (ratio === undefined) {
-                compressedSample = lowerThreshold;
-            }
-            else {
-                compressedSample = ((sample - lowerThreshold) / ratio) + lowerThreshold;
-            }
+        else if (params.downwardCompressorReleaseSamples === undefined) {
+            downwardCompressorState.ratio = 1;
         }
         else {
-            compressedSample = sample;
+            downwardCompressorState.ratio = Math.max(downwardCompressorState.ratio - (ratio / params.downwardCompressorReleaseSamples), 1);
         }
-        audioData[setSampleMethod](index, compressedSample, isLe);
+        audioData[setSampleMethod](index, ((sample - threshold) / downwardCompressorState.ratio) + threshold, isLe);
     }
 }
