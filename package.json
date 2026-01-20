@@ -5,9 +5,11 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "eslint && tsc",
-    "test": "mocha -r ts-node/register 'src/**/*.test.ts' --exit"
-  },
+    "lint": "eslint",
+    "build": "npm run build-napi && tsc",
+    "test": "mocha -r ts-node/register 'src/**/*.test.ts' --exit",
+    "build-napi": "napi build --release --manifest-path pcm-monitor/Cargo.toml"
+  },  
   "engines": {
     "node": ">=18.0.0"
   },
@@ -24,8 +26,14 @@
     "audio",
     "mixer"
   ],
-  "authors": ["Alex Pl (https://github.com/AlexPl3331)", "Samuel Bowden (https://github.com/Samuel-Bowden)"],
+  "authors": [
+    "Alex Pl (https://github.com/AlexPl3331)",
+    "Samuel Bowden (https://github.com/Samuel-Bowden)"
+  ],
   "license": "MIT",
+  "dependencies": {
+    "@napi-rs/cli": "^3.5.1"
+  },
   "devDependencies": {
     "@types/chai": "^4.3.5",
     "@types/mocha": "^10.0.1",

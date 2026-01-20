@@ -1,0 +1,15 @@
+[package]
+name = "pcm-monitor"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+ebur128 = "0.1.10"
+napi = "3"
+napi-derive = "3"
+
+[build-dependencies]
+napi-build = "1"
