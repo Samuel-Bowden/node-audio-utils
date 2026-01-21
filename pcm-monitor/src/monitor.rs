@@ -66,16 +66,16 @@ impl PCMMonitor {
             .map_err(|e| napi::Error::from_reason(format!("Failed to get loudness range: {e}")))?;
 
         let num_channels = monitor.channels();
-        let mut peaks = Vec::with_capacity(num_channels as usize);
-        let mut true_peaks = Vec::with_capacity(num_channels as usize);
+        let mut peaks_dbfs = Vec::with_capacity(num_channels as usize);
+        let mut true_peaks_dbtp = Vec::with_capacity(num_channels as usize);
 
         for ch in 0..num_channels {
-            peaks.push(monitor.sample_peak(ch).map_err(|e| {
+            peaks_dbfs.push(percent_fs_to_db(monitor.sample_peak(ch).map_err(|e| {
                 napi::Error::from_reason(format!("Failed to get sample peak for channel {ch}: {e}"))
-            })?);
-            true_peaks.push(monitor.true_peak(ch).map_err(|e| {
+            })?));
+            true_peaks_dbtp.push(percent_fs_to_db(monitor.true_peak(ch).map_err(|e| {
                 napi::Error::from_reason(format!("Failed to get true peak for channel {ch}: {e}"))
-            })?);
+            })?));
         }
 
         Ok(PCMStats {
@@ -83,8 +83,8 @@ impl PCMMonitor {
             s_lufs,
             i_lufs,
             lra_lu,
-            peaks,
-            true_peaks,
+            peaks_dbfs,
+            true_peaks_dbtp,
         })
     }
 }
@@ -95,6 +95,10 @@ pub struct PCMStats {
     pub s_lufs: f64,
     pub i_lufs: f64,
     pub lra_lu: f64,
-    pub peaks: Vec<f64>,
-    pub true_peaks: Vec<f64>,
+    pub peaks_dbfs: Vec<f64>,
+    pub true_peaks_dbtp: Vec<f64>,
+}
+
+fn percent_fs_to_db(percent_fs: f64) -> f64 {
+    20f64 * f64::log10(percent_fs)
 }

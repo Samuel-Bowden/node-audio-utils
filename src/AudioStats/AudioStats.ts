@@ -20,6 +20,9 @@ export class AudioStats extends Writable {
 	public getStats() {
 		return this.monitor.getStats();
 	}
+
+	// eslint-disable-next-line @typescript-eslint/no-empty-function
+	public close() { }
 }
 
 export type LoudnessMonitorParams = {
