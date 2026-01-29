@@ -14,8 +14,12 @@ import {changeChannelsCount} from './AudioUtils/СhangeChannelsCount';
 import {changeEndianness} from './AudioUtils/ChangeEndianness';
 import {applyGate} from './AudioUtils/ApplyGate';
 import {applyDownwardCompressor} from './AudioUtils/ApplyDownwardCompressor';
+import {ProcessingStats} from './Stats/ProcessingStats';
+import {updateStats} from './AudioUtils/UpdateStats';
 
 export class InputUtils implements AudioUtils {
+	public readonly processingStats: ProcessingStats;
+
 	private readonly audioInputParams: InputParams;
 	private readonly audioMixerParams: MixerParams;
 
@@ -38,6 +42,8 @@ export class InputUtils implements AudioUtils {
 		this.gateState = {holdSamplesRemaining: inputParams.gateHoldSamples, attenuation: 1};
 
 		this.downwardCompressorState = {ratio: 1};
+
+		this.processingStats = new ProcessingStats(mixerParams.bitDepth, mixerParams.channels);
 	}
 
 	public setAudioData(audioData: Uint8Array): this {
@@ -101,9 +107,20 @@ export class InputUtils implements AudioUtils {
 		return this;
 	}
 
+	public updatePreProcessStats(): this {
+		updateStats(this.audioData, this.changedParams, this.processingStats.preProcess);
+
+		return this;
+	}
+
 	public applyGate(): this {
 		if (this.changedParams.gateThreshold !== undefined) {
-			applyGate(this.audioData, this.changedParams, this.gateState);
+			applyGate(
+				this.audioData,
+				this.changedParams,
+				this.gateState,
+				this.processingStats.postGate,
+			);
 		}
 
 		return this;
@@ -111,7 +128,12 @@ export class InputUtils implements AudioUtils {
 
 	public applyDownwardCompressor(): this {
 		if (this.changedParams.downwardCompressorThreshold !== undefined) {
-			applyDownwardCompressor(this.audioData, this.changedParams, this.downwardCompressorState);
+			applyDownwardCompressor(
+				this.audioData,
+				this.changedParams,
+				this.downwardCompressorState,
+				this.processingStats.postDownwardCompressor,
+			);
 		}
 
 		return this;

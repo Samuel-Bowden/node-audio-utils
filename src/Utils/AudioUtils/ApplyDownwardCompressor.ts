@@ -6,8 +6,14 @@ import {type DownwardCompressorState} from '../State';
 import {isLittleEndian} from '../General/IsLittleEndian';
 import {getMethodName} from '../General/GetMethodName';
 import {convertThreshold} from '../General/ConvertThreshold';
+import {type Stats} from '../Stats/Stats';
 
-export function applyDownwardCompressor(audioData: ModifiedDataView, params: InputParams | MixerParams, downwardCompressorState: DownwardCompressorState): void {
+export function applyDownwardCompressor(
+	audioData: ModifiedDataView,
+	params: InputParams | MixerParams,
+	downwardCompressorState: DownwardCompressorState,
+	postDownwardCompressor: Stats,
+): void {
 	const bytesPerElement = params.bitDepth / 8;
 	const isLe = isLittleEndian(params.endianness);
 
@@ -35,6 +41,10 @@ export function applyDownwardCompressor(audioData: ModifiedDataView, params: Inp
 			downwardCompressorState.ratio = Math.max(downwardCompressorState.ratio - (ratio / params.downwardCompressorReleaseSamples), 1);
 		}
 
-		audioData[setSampleMethod](index, ((sample - threshold) / downwardCompressorState.ratio) + threshold, isLe);
+		const compressedSample = ((sample - threshold) / downwardCompressorState.ratio) + threshold;
+
+		postDownwardCompressor.update(compressedSample);
+
+		audioData[setSampleMethod](index, compressedSample, isLe);
 	}
 }

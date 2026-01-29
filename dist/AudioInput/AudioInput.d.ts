@@ -1,5 +1,6 @@
 import { type OmitSomeParams, type InputParams, type MixerParams } from '../Types/ParamTypes';
 import { Writable } from 'stream';
+import { type ProcessingStats } from '../Utils/Stats/ProcessingStats';
 type SelfRemoveFunction = (audioInput: AudioInput) => void;
 export declare class AudioInput extends Writable {
     private readonly inputParams;
@@ -11,6 +12,7 @@ export declare class AudioInput extends Writable {
     constructor(inputParams: InputParams, mixerParams: MixerParams, selfRemoveFunction?: SelfRemoveFunction);
     get params(): Readonly<InputParams>;
     set params(params: OmitSomeParams<InputParams>);
+    get processingStats(): ProcessingStats;
     get dataSize(): number;
     clear(): void;
     _write(chunk: Uint8Array, _: BufferEncoding, callback: (error?: Error) => void): number;

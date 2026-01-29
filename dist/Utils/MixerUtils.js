@@ -6,6 +6,8 @@ const ApplyGate_1 = require("./AudioUtils/ApplyGate");
 const ApplyDownwardCompressor_1 = require("./AudioUtils/ApplyDownwardCompressor");
 const ModifiedDataView_1 = require("../ModifiedDataView/ModifiedDataView");
 const MixAudioData_1 = require("./General/MixAudioData");
+const ProcessingStats_1 = require("./Stats/ProcessingStats");
+const UpdateStats_1 = require("./AudioUtils/UpdateStats");
 class MixerUtils {
     constructor(mixerParams) {
         this.dataCollection = [];
@@ -15,6 +17,7 @@ class MixerUtils {
         this.mixedData = new ModifiedDataView_1.ModifiedDataView(this.emptyData.buffer);
         this.gateState = { holdSamplesRemaining: mixerParams.gateHoldSamples, attenuation: 1 };
         this.downwardCompressorState = { ratio: 1 };
+        this.processingStats = new ProcessingStats_1.ProcessingStats(mixerParams.bitDepth, mixerParams.channels);
     }
     setAudioData(audioData) {
         this.dataCollection = audioData.map((audioData) => new ModifiedDataView_1.ModifiedDataView(audioData.buffer));
@@ -44,15 +47,19 @@ class MixerUtils {
         }
         return this;
     }
+    updatePreProcessStats() {
+        (0, UpdateStats_1.updateStats)(this.mixedData, this.changedParams, this.processingStats.preProcess);
+        return this;
+    }
     applyGate() {
         if (this.audioMixerParams.gateThreshold !== undefined) {
-            (0, ApplyGate_1.applyGate)(this.mixedData, this.changedParams, this.gateState);
+            (0, ApplyGate_1.applyGate)(this.mixedData, this.changedParams, this.gateState, this.processingStats.postGate);
         }
         return this;
     }
     applyDownwardCompressor() {
         if (this.audioMixerParams.downwardCompressorThreshold !== undefined) {
-            (0, ApplyDownwardCompressor_1.applyDownwardCompressor)(this.mixedData, this.changedParams, this.downwardCompressorState);
+            (0, ApplyDownwardCompressor_1.applyDownwardCompressor)(this.mixedData, this.changedParams, this.downwardCompressorState, this.processingStats.postDownwardCompressor);
         }
         return this;
     }

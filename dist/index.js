@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.decibelsToGain = exports.gainToDecibels = exports.isBitDepth = exports.isSampleRate = exports.AudioInput = exports.AudioStats = exports.AudioInterleaver = exports.AudioMixer = void 0;
+exports.ProcessingStats = exports.decibelsToGain = exports.gainToDecibels = exports.isBitDepth = exports.isSampleRate = exports.AudioInput = exports.AudioStats = exports.AudioInterleaver = exports.AudioMixer = void 0;
 const AudioMixer_1 = require("./AudioMixer/AudioMixer");
 Object.defineProperty(exports, "AudioMixer", { enumerable: true, get: function () { return AudioMixer_1.AudioMixer; } });
 const AudioInput_1 = require("./AudioInput/AudioInput");
@@ -12,6 +12,8 @@ Object.defineProperty(exports, "AudioStats", { enumerable: true, get: function (
 const Units_1 = require("./Units/Units");
 Object.defineProperty(exports, "gainToDecibels", { enumerable: true, get: function () { return Units_1.gainToDecibels; } });
 Object.defineProperty(exports, "decibelsToGain", { enumerable: true, get: function () { return Units_1.decibelsToGain; } });
+const ProcessingStats_1 = require("./Utils/Stats/ProcessingStats");
+Object.defineProperty(exports, "ProcessingStats", { enumerable: true, get: function () { return ProcessingStats_1.ProcessingStats; } });
 const AudioTypes_1 = require("./Types/AudioTypes");
 Object.defineProperty(exports, "isSampleRate", { enumerable: true, get: function () { return AudioTypes_1.isSampleRate; } });
 Object.defineProperty(exports, "isBitDepth", { enumerable: true, get: function () { return AudioTypes_1.isBitDepth; } });

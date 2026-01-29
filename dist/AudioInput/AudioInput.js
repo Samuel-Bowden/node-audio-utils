@@ -22,6 +22,9 @@ class AudioInput extends stream_1.Writable {
     set params(params) {
         Object.assign(this.inputParams, params);
     }
+    get processingStats() {
+        return this.audioUtils.processingStats;
+    }
     get dataSize() {
         return this.closed ? (this.mixerParams.highWaterMark ?? this.audioData.length) : this.audioData.length;
     }
@@ -111,8 +114,9 @@ class AudioInput extends stream_1.Writable {
             .checkIntType()
             .checkEndianness()
             .checkPreProcessVolume()
-            .applyGate()
+            .updatePreProcessStats()
             .applyDownwardCompressor()
+            .applyGate()
             .checkPostProcessVolume()
             .getAudioData();
     }

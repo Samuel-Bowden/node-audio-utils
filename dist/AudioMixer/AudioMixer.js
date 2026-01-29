@@ -18,6 +18,9 @@ class AudioMixer extends stream_1.Readable {
     set params(params) {
         Object.assign(this.mixerParams, params);
     }
+    get processingStats() {
+        return this.audioUtils.processingStats;
+    }
     _read() {
         (0, AssertHighWaterMark_1.assertHighWaterMark)(this.params.bitDepth, this.params.highWaterMark);
         const allInputsSize = this.inputs.map((input) => input.dataSize)
@@ -29,8 +32,9 @@ class AudioMixer extends stream_1.Readable {
             const mixedData = this.audioUtils.setAudioData(dataCollection)
                 .mix()
                 .checkPreProcessVolume()
-                .applyGate()
+                .updatePreProcessStats()
                 .applyDownwardCompressor()
+                .applyGate()
                 .checkPostProcessVolume()
                 .getAudioData();
             this.unshift(mixedData);

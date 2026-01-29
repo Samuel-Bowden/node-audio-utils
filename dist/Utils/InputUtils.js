@@ -11,6 +11,8 @@ const _hangeChannelsCount_1 = require("./AudioUtils/\u0421hangeChannelsCount");
 const ChangeEndianness_1 = require("./AudioUtils/ChangeEndianness");
 const ApplyGate_1 = require("./AudioUtils/ApplyGate");
 const ApplyDownwardCompressor_1 = require("./AudioUtils/ApplyDownwardCompressor");
+const ProcessingStats_1 = require("./Stats/ProcessingStats");
+const UpdateStats_1 = require("./AudioUtils/UpdateStats");
 class InputUtils {
     constructor(inputParams, mixerParams) {
         this.emptyData = new Uint8Array(0);
@@ -20,6 +22,7 @@ class InputUtils {
         this.audioData = new ModifiedDataView_1.ModifiedDataView(this.emptyData.buffer);
         this.gateState = { holdSamplesRemaining: inputParams.gateHoldSamples, attenuation: 1 };
         this.downwardCompressorState = { ratio: 1 };
+        this.processingStats = new ProcessingStats_1.ProcessingStats(mixerParams.bitDepth, mixerParams.channels);
     }
     setAudioData(audioData) {
         this.audioData = new ModifiedDataView_1.ModifiedDataView(audioData.buffer, audioData.byteOffset, audioData.length);
@@ -65,15 +68,19 @@ class InputUtils {
         }
         return this;
     }
+    updatePreProcessStats() {
+        (0, UpdateStats_1.updateStats)(this.audioData, this.changedParams, this.processingStats.preProcess);
+        return this;
+    }
     applyGate() {
         if (this.changedParams.gateThreshold !== undefined) {
-            (0, ApplyGate_1.applyGate)(this.audioData, this.changedParams, this.gateState);
+            (0, ApplyGate_1.applyGate)(this.audioData, this.changedParams, this.gateState, this.processingStats.postGate);
         }
         return this;
     }
     applyDownwardCompressor() {
         if (this.changedParams.downwardCompressorThreshold !== undefined) {
-            (0, ApplyDownwardCompressor_1.applyDownwardCompressor)(this.audioData, this.changedParams, this.downwardCompressorState);
+            (0, ApplyDownwardCompressor_1.applyDownwardCompressor)(this.audioData, this.changedParams, this.downwardCompressorState, this.processingStats.postDownwardCompressor);
         }
         return this;
     }

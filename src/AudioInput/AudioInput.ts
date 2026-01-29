@@ -5,6 +5,7 @@ import {endianness} from 'os';
 
 import {InputUtils} from '../Utils/InputUtils';
 import {getZeroSample} from '../Utils/General/GetZeroSample';
+import {type ProcessingStats} from '../Utils/Stats/ProcessingStats';
 
 type SelfRemoveFunction = (audioInput: AudioInput) => void;
 
@@ -38,6 +39,10 @@ export class AudioInput extends Writable {
 
 	set params(params: OmitSomeParams<InputParams>) {
 		Object.assign(this.inputParams, params);
+	}
+
+	get processingStats(): ProcessingStats {
+		return this.audioUtils.processingStats;
 	}
 
 	public get dataSize(): number {
@@ -166,8 +171,9 @@ export class AudioInput extends Writable {
 			.checkIntType()
 			.checkEndianness()
 			.checkPreProcessVolume()
-			.applyGate()
+			.updatePreProcessStats()
 			.applyDownwardCompressor()
+			.applyGate()
 			.checkPostProcessVolume()
 			.getAudioData();
 	}

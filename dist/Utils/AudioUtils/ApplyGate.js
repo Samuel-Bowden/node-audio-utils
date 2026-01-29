@@ -4,7 +4,7 @@ exports.applyGate = applyGate;
 const IsLittleEndian_1 = require("../General/IsLittleEndian");
 const GetMethodName_1 = require("../General/GetMethodName");
 const ConvertThreshold_1 = require("../General/ConvertThreshold");
-function applyGate(audioData, params, gateState) {
+function applyGate(audioData, params, gateState, postGate) {
     const bytesPerElement = params.bitDepth / 8;
     const isLe = (0, IsLittleEndian_1.isLittleEndian)(params.endianness);
     const { upperThreshold, lowerThreshold, equilibrium } = (0, ConvertThreshold_1.convertThreshold)(params.bitDepth, params.unsigned, params.gateThreshold);
@@ -30,6 +30,8 @@ function applyGate(audioData, params, gateState) {
         else {
             gateState.attenuation = Math.max(gateState.attenuation - (1 / params.gateReleaseSamples), 0);
         }
-        audioData[setSampleMethod](index, ((sample - equilibrium) * gateState.attenuation) + equilibrium, isLe);
+        const gatedSample = ((sample - equilibrium) * gateState.attenuation) + equilibrium;
+        postGate.update(gatedSample);
+        audioData[setSampleMethod](index, gatedSample, isLe);
     }
 }

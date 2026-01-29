@@ -6,6 +6,7 @@ import {assertHighWaterMark} from '../Asserts/AssertHighWaterMark';
 
 import {MixerUtils} from '../Utils/MixerUtils';
 import {AudioInput} from '../AudioInput/AudioInput';
+import {type ProcessingStats} from '../Utils/Stats/ProcessingStats';
 
 export class AudioMixer extends Readable {
 	private readonly mixerParams: MixerParams;
@@ -28,6 +29,10 @@ export class AudioMixer extends Readable {
 		Object.assign(this.mixerParams, params);
 	}
 
+	get processingStats(): ProcessingStats {
+		return this.audioUtils.processingStats;
+	}
+
 	_read(): void {
 		assertHighWaterMark(this.params.bitDepth, this.params.highWaterMark);
 
@@ -43,8 +48,9 @@ export class AudioMixer extends Readable {
 			const mixedData = this.audioUtils.setAudioData(dataCollection)
 				.mix()
 				.checkPreProcessVolume()
-				.applyGate()
+				.updatePreProcessStats()
 				.applyDownwardCompressor()
+				.applyGate()
 				.checkPostProcessVolume()
 				.getAudioData();
 

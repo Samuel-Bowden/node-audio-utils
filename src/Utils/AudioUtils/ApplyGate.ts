@@ -6,8 +6,14 @@ import {type GateState} from '../State';
 import {isLittleEndian} from '../General/IsLittleEndian';
 import {getMethodName} from '../General/GetMethodName';
 import {convertThreshold} from '../General/ConvertThreshold';
+import {type Stats} from '../Stats/Stats';
 
-export function applyGate(audioData: ModifiedDataView, params: InputParams | MixerParams, gateState: GateState): void {
+export function applyGate(
+	audioData: ModifiedDataView,
+	params: InputParams | MixerParams,
+	gateState: GateState,
+	postGate: Stats,
+): void {
 	const bytesPerElement = params.bitDepth / 8;
 	const isLe = isLittleEndian(params.endianness);
 
@@ -34,6 +40,10 @@ export function applyGate(audioData: ModifiedDataView, params: InputParams | Mix
 			gateState.attenuation = Math.max(gateState.attenuation - (1 / params.gateReleaseSamples), 0);
 		}
 
-		audioData[setSampleMethod](index, ((sample - equilibrium) * gateState.attenuation) + equilibrium, isLe);
+		const gatedSample = ((sample - equilibrium) * gateState.attenuation) + equilibrium;
+
+		postGate.update(gatedSample);
+
+		audioData[setSampleMethod](index, gatedSample, isLe);
 	}
 }

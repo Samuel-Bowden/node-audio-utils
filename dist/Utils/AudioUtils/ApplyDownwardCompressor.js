@@ -4,7 +4,7 @@ exports.applyDownwardCompressor = applyDownwardCompressor;
 const IsLittleEndian_1 = require("../General/IsLittleEndian");
 const GetMethodName_1 = require("../General/GetMethodName");
 const ConvertThreshold_1 = require("../General/ConvertThreshold");
-function applyDownwardCompressor(audioData, params, downwardCompressorState) {
+function applyDownwardCompressor(audioData, params, downwardCompressorState, postDownwardCompressor) {
     const bytesPerElement = params.bitDepth / 8;
     const isLe = (0, IsLittleEndian_1.isLittleEndian)(params.endianness);
     const { upperThreshold, lowerThreshold, equilibrium } = (0, ConvertThreshold_1.convertThreshold)(params.bitDepth, params.unsigned, params.downwardCompressorThreshold);
@@ -28,6 +28,8 @@ function applyDownwardCompressor(audioData, params, downwardCompressorState) {
         else {
             downwardCompressorState.ratio = Math.max(downwardCompressorState.ratio - (ratio / params.downwardCompressorReleaseSamples), 1);
         }
-        audioData[setSampleMethod](index, ((sample - threshold) / downwardCompressorState.ratio) + threshold, isLe);
+        const compressedSample = ((sample - threshold) / downwardCompressorState.ratio) + threshold;
+        postDownwardCompressor.update(compressedSample);
+        audioData[setSampleMethod](index, compressedSample, isLe);
     }
 }

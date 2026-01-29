@@ -1,6 +1,8 @@
 import { type AudioUtils } from '../Types/AudioUtils';
 import { type InputParams, type MixerParams } from '../Types/ParamTypes';
+import { ProcessingStats } from './Stats/ProcessingStats';
 export declare class InputUtils implements AudioUtils {
+    readonly processingStats: ProcessingStats;
     private readonly audioInputParams;
     private readonly audioMixerParams;
     private changedParams;
@@ -16,6 +18,7 @@ export declare class InputUtils implements AudioUtils {
     checkChannelsCount(): this;
     checkPreProcessVolume(): this;
     checkPostProcessVolume(): this;
+    updatePreProcessStats(): this;
     applyGate(): this;
     applyDownwardCompressor(): this;
     checkEndianness(): this;
