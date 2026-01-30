@@ -1,5 +1,4 @@
 # Build output
-dist/
 pcm-monitor/target/
 pcm-monitor/index*
 
