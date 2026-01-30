@@ -10,7 +10,7 @@ export type {
 	SampleRate, BitDepth, Endianness, IntType,
 };
 
-export const isSampleRate = (v: number): v is SampleRate =>
+export const isSampleRate = (v: unknown): v is SampleRate =>
 	v === 4000
 	|| v === 8000
 	|| v === 11025
@@ -25,4 +25,4 @@ export const isSampleRate = (v: number): v is SampleRate =>
 	|| v === 176400
 	|| v === 192000;
 
-export const isBitDepth = (v: number): v is BitDepth => v === 8 || v === 16 || v === 24 || v === 32;
+export const isBitDepth = (v: unknown): v is BitDepth => v === 8 || v === 16 || v === 24 || v === 32;

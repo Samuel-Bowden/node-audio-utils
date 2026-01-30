@@ -1,21 +1,23 @@
 import {type InputParams, type MixerParams} from '../../Types/ParamTypes';
 import {type ModifiedDataView} from '../../ModifiedDataView/ModifiedDataView';
 import {type IntType, type BitDepth} from '../../Types/AudioTypes';
-import {type GateState} from '../GateState';
+import {type GateState} from '../State';
 
 import {isLittleEndian} from '../General/IsLittleEndian';
 import {getMethodName} from '../General/GetMethodName';
+import {convertThreshold} from '../General/ConvertThreshold';
+import {type Stats} from '../Stats/Stats';
 
-export function applyGateThreshold(audioData: ModifiedDataView, params: InputParams | MixerParams, gateState: GateState): void {
+export function applyGate(
+	audioData: ModifiedDataView,
+	params: InputParams | MixerParams,
+	gateState: GateState,
+	postGate: Stats,
+): void {
 	const bytesPerElement = params.bitDepth / 8;
 	const isLe = isLittleEndian(params.endianness);
 
-	const halfRange = (2 ** params.bitDepth) / 2;
-	const equilibrium = params.unsigned ? halfRange : 0;
-	const threshold = halfRange * (params.gateThreshold!);
-
-	const upperBound = equilibrium + threshold - 1;
-	const lowerBound = equilibrium - threshold;
+	const {upperThreshold, lowerThreshold, equilibrium} = convertThreshold(params.bitDepth, params.unsigned, params.gateThreshold!);
 
 	const getSampleMethod: `get${IntType}${BitDepth}` = `get${getMethodName(params.bitDepth, params.unsigned)}`;
 	const setSampleMethod: `set${IntType}${BitDepth}` = `set${getMethodName(params.bitDepth, params.unsigned)}`;
@@ -23,17 +25,24 @@ export function applyGateThreshold(audioData: ModifiedDataView, params: InputPar
 	for (let index = 0; index < audioData.byteLength; index += bytesPerElement) {
 		const sample = audioData[getSampleMethod](index, isLe);
 
-		let gatedSample;
-
-		if (sample <= lowerBound || sample >= upperBound) {
+		if (sample <= lowerThreshold || sample >= upperThreshold) {
 			gateState.holdSamplesRemaining = params.gateHoldSamples;
-			gatedSample = sample;
+			if (params.gateAttackSamples === undefined) {
+				gateState.attenuation = 1;
+			} else {
+				gateState.attenuation = Math.min(gateState.attenuation + (1 / params.gateAttackSamples), 1);
+			}
 		} else if (gateState.holdSamplesRemaining !== undefined && gateState.holdSamplesRemaining > 0) {
 			gateState.holdSamplesRemaining -= 1;
-			gatedSample = sample;
+		} else if (params.gateReleaseSamples === undefined) {
+			gateState.attenuation = 0;
 		} else {
-			gatedSample = equilibrium;
+			gateState.attenuation = Math.max(gateState.attenuation - (1 / params.gateReleaseSamples), 0);
 		}
+
+		const gatedSample = ((sample - equilibrium) * gateState.attenuation) + equilibrium;
+
+		postGate.update(gatedSample);
 
 		audioData[setSampleMethod](index, gatedSample, isLe);
 	}
